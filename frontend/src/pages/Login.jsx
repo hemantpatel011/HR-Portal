@@ -1,14 +1,12 @@
 import {useState} from 'react';
 import { Link, useNavigate} from 'react-router-dom';
-import axios from "axios"
-import toast from 'react-hot-toast';
-
-// create token using  JWT 
+import axios from "../config/api";
+import toast, { Toaster } from "react-hot-toast";
+ 
 
  const Login = () => {
   const navigate = useNavigate();
-
-  const [Data, setData] = useState({
+  const [data, setData] = useState({
     email:"",
     password:"",
   })
@@ -27,7 +25,7 @@ const handleChange = (e) =>{
   e.preventDefault();
 
 try{
-  const response = await axios.post("http://localhost:4500/auth/login",Data);
+  const response = await axios.post("auth/login",data);
   console.log(response.data);
   toast.success(response.data.message);
   navigate("/dashboard");

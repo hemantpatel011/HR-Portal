@@ -1,16 +1,14 @@
 import { useState } from "react";
-import {useNavigate} from "react-router-dom"
-import axios from "axios";
-import toast from 'react-hot-toast';
-
-
-// Address , Shift Start Time, Shift end time and Week of <select option>
+import { useNavigate } from "react-router-dom";
+import axios from "../config/api";
+import toast, { Toaster } from "react-hot-toast";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 const Register = () => {
-
-    const navigate = useNavigate();
-
-  const [Data, setData] = useState({
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [data, setData] = useState({
     fullName: "",
     email: "",
     phone: "",
@@ -23,11 +21,13 @@ const Register = () => {
     salary: "",
     crPassword: "",
     password: "",
+    shiftStartTime: "",
+    shiftEndTime: "",
+    address: "",
+    weekOff: "Sunday",
   });
 
-  const [error,setError] = useState({});
-
-  const HandleChange = (e) => {
+  const handelChange = (e) => {
     const { name, value } = e.target;
 
     setData((prev) => ({
@@ -36,97 +36,138 @@ const Register = () => {
     }));
   };
 
-// Form Validations
-  const validate = () =>{
+  const validateForm = () => {
     let tempErrors = {};
 
-// Regural Expression in JS start with "/^...." & end with doller sign "...$", like "/^.....&"
-
-    if(!/^[A-Za-z\s]+$/.test(Data.fullName) || Data.fullName < 3){
-      tempErrors.fullName= "Please use only alphabates and should be  more than three characters";
+    // Name validation
+    if (!/^[a-zA-Z\s]{3,30}$/.test(data.fullName.trim())) {
+      tempErrors.fullName =
+        "Name should be 3-30 characters and contain only letters";
     }
 
-    if(!/^[6-9]\d{9}$/.test(Data.phone)){
-      tempErrors.phone= "Please enter a valid 10 digits Mobile number";
+    // Email validation
+    if (
+      !/^[a-zA-Z_\d]+@(gmail.com|ricr.in|rajgroup.co|rajdigital.com)$/.test(
+        data.email
+      )
+    ) {
+      tempErrors.email = "Please enter a valid email address";
     }
 
-    if(!/^[A-Za-z\d._]+@(gmail.com|yahoo.com|outlook.com|ricr.in)$/.test(Data.email)){
-      tempErrors.email= "Please enter a valid Email address";
+    // Phone validation
+    if (!/^[6-9]\d{9}$/.test(data.phone)) {
+      tempErrors.phone =
+        "Phone number should be 10 digits valid indian phone number";
     }
 
-    if(Data.password !== Data.crPassword){
-      tempErrors.password = "Password must be same.";
+    // Age validation
+    const birthDate = new Date(data.dob);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    if (age < 21) {
+      tempErrors.dob = "Age should be at least 21 years";
     }
 
-    setError(tempErrors);
-
-    return Object.keys(tempErrors).length ===0;
-  }
-
-  const HandleSubmit = async (e) => {
-    e.preventDefault();
-
-
-  // Data validation 
-      if(!validate()){
-          return;
-        };  
-
-    console.log(Data);
-
-    try {
-      const response = await axios.post(
-        "http://localhost:4500/auth/register",
-        Data
-      );
-      console.log(response.data);
-      toast.success(response.data.message);
-      setData({ fullName: "",
-                email: "",
-                phone: "",
-                gender: "",
-                dob: "",
-                qualification: "",
-                department: "",
-                position: "",
-                hiringDate: "",
-                salary: "",
-                crPassword: "",
-                password: "",});
-
-       navigate("/login");
-    } catch (e) {
-      console.log("Uanble to fetch Data from Server");
-     toast.error(e.response.data.message);
+    // Position validation
+    if (data.position.trim().length < 2) {
+      tempErrors.position = "Position is required";
     }
-    
+
+    // Salary validation
+    if (isNaN(data.salary) || Number(data.salary) <= 0) {
+      tempErrors.salary = "Please enter a valid salary amount";
+    }
+
+    // Address validation
+    if (data.address.trim().length < 10) {
+      tempErrors.address =
+        "Please enter a complete address (minimum 10 characters)";
+    }
+    // Password validation
+    if (
+      !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
+        data.crPassword
+      )
+    ) {
+      tempErrors.crPassword =
+        "Password must be at least 8 characters, include uppercase, lowercase, number and special character";
+    }
+
+    // Password match validation
+    if (data.crPassword !== data.password) {
+      tempErrors.password = "Passwords do not match";
+    }
+
+    setErrors(tempErrors);
+    return Object.keys(tempErrors).length === 0;
   };
 
+  const handelSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    if (!validateForm()) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await axios.post("auth/register", data);
+      toast.success("Registration successful!");
+      setData({
+        fullName: "",
+        email: "",
+        phone: "",
+        gender: "",
+        dob: "",
+        qualification: "",
+        department: "",
+        position: "",
+        hiringDate: "",
+        salary: "",
+        crPassword: "",
+        password: "",
+        shiftStartTime: "",
+        shiftEndTime: "",
+        address: "",
+        weekOff: "Sunday",
+      });
+      navigate("/login");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Registration failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Modify input fields to show errors, here's an example for the name field:
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-300 via-blue-200 to-cyan-100 p-6">
+      <Toaster position="top-center" reverseOrder={false} />
       <div className="w-full max-w-2xl bg-white/40 backdrop-blur-md rounded-3xl shadow-2xl p-10 border border-white/30">
         <h2 className="text-4xl font-extrabold text-center text-blue-800 mb-8 drop-shadow">
           Create Account
         </h2>
-        <form className="space-y-6" onSubmit={HandleSubmit}>
+        <form className="space-y-6" onSubmit={handelSubmit}>
           {/* Name */}
           <div>
             <label className="block mb-1 text-blue-900 font-medium">
               Full Name
             </label>
             <input
-              name="fullName"
-              value={Data.fullName}
-              onChange={HandleChange}
               type="text"
-              className="w-full px-4 py-3 rounded-xl bg-white/60 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              name="fullName"
+              className={`w-full px-4 py-3 rounded-xl bg-white/60 border ${
+                errors.fullName ? "border-red-500" : "border-gray-300"
+              } focus:outline-none focus:ring-2 focus:ring-purple-400`}
               placeholder="John Doe"
+              value={data.fullName}
+              onChange={handelChange}
               required
             />
-            {
-              error.fullName && <p className="text-sm text-red-500">{error.fullName}</p>
-            }
-
+            {errors.fullName && (
+              <p className="mt-1 text-sm text-red-500">{errors.fullName}</p>
+            )}
           </div>
 
           {/* Email */}
@@ -135,35 +176,59 @@ const Register = () => {
               Email
             </label>
             <input
-              name="email"
-              value={Data.email}
-              onChange={HandleChange}
               type="email"
-              className="w-full px-4 py-3 rounded-xl bg-white/60 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              name="email"
+              className={`w-full px-4 py-3 rounded-xl bg-white/60 border ${
+                errors.email ? "border-red-500" : "border-gray-300"
+              } focus:outline-none focus:ring-2 focus:ring-purple-400`}
               placeholder="example@mail.com"
+              value={data.email}
+              onChange={handelChange}
               required
             />
-             {
-              error.email && <p className="text-sm text-red-500">{error.email}</p>
-            }
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+            )}
           </div>
-          {/* phone */}
+          {/* Phone */}
           <div>
             <label className="block mb-1 text-blue-900 font-medium">
               Mobile Number
             </label>
             <input
-              name="phone"
-              value={Data.phone}
-              onChange={HandleChange}
               type="tel"
-              className="w-full px-4 py-3 rounded-xl bg-white/60 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              placeholder="0000000000"
+              name="phone"
+              className={`w-full px-4 py-3 rounded-xl bg-white/60 border ${
+                errors.phone ? "border-red-500" : "border-gray-300"
+              } focus:outline-none focus:ring-2 focus:ring-purple-400`}
+              placeholder="9876543210"
+              value={data.phone}
+              onChange={handelChange}
               required
             />
-             {
-              error.phone && <p className="text-sm text-red-500">{error.phone}</p>
-            }
+            {errors.phone && (
+              <p className="mt-1 text-sm text-red-500">{errors.phone}</p>
+            )}
+          </div>
+
+          {/* DOB */}
+          <div>
+            <label className="block mb-1 text-blue-900 font-medium">
+              Date of Birth
+            </label>
+            <input
+              type="date"
+              name="dob"
+              className={`w-full px-4 py-3 rounded-xl bg-white/60 border ${
+                errors.dob ? "border-red-500" : "border-gray-300"
+              } focus:outline-none focus:ring-2 focus:ring-purple-400`}
+              value={data.dob}
+              onChange={handelChange}
+              required
+            />
+            {errors.dob && (
+              <p className="mt-1 text-sm text-red-500">{errors.dob}</p>
+            )}
           </div>
 
           {/* Gender */}
@@ -177,9 +242,9 @@ const Register = () => {
                   type="radio"
                   name="gender"
                   value="male"
-                    checked={Data.gender === "male"}
-                  onChange={HandleChange}
                   className="mr-2"
+                  checked={data.gender === "male"}
+                  onChange={handelChange}
                   required
                 />
                 Male
@@ -189,29 +254,14 @@ const Register = () => {
                   type="radio"
                   name="gender"
                   value="female"
-                   checked={Data.gender === "female"}
-                  onChange={HandleChange}
                   className="mr-2"
+                  checked={data.gender === "female"}
+                  onChange={handelChange}
                   required
                 />
                 Female
               </label>
             </div>
-          </div>
-
-          {/* DOB */}
-          <div>
-            <label className="block mb-1 text-blue-900 font-medium">
-              Date of Birth
-            </label>
-            <input
-              name="dob"
-              value={Data.dob}
-              onChange={HandleChange}
-              type="date"
-              className="w-full px-4 py-3 rounded-xl bg-white/60 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              required
-            />
           </div>
 
           {/* Qualification */}
@@ -221,9 +271,9 @@ const Register = () => {
             </label>
             <select
               name="qualification"
-              value={Data.qualification}
-              onChange={HandleChange}
               className="w-full px-4 py-3 rounded-xl bg-white/60 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              value={data.qualification}
+              onChange={handelChange}
               required
             >
               <option value="">Select</option>
@@ -241,9 +291,9 @@ const Register = () => {
             </label>
             <select
               name="department"
-              value={Data.department}
-              onChange={HandleChange}
               className="w-full px-4 py-3 rounded-xl bg-white/60 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              value={data.department}
+              onChange={handelChange}
               required
             >
               <option value="">Select</option>
@@ -263,12 +313,12 @@ const Register = () => {
               Position
             </label>
             <input
-              name="position"
-              value={Data.position}
-              onChange={HandleChange}
               type="text"
+              name="position"
               className="w-full px-4 py-3 rounded-xl bg-white/60 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
               placeholder="e.g. Team Lead"
+              value={data.position}
+              onChange={handelChange}
               required
             />
           </div>
@@ -279,11 +329,11 @@ const Register = () => {
               Hiring Date
             </label>
             <input
-              name="hiringDate"
-              value={Data.hiringDate}
-              onChange={HandleChange}
               type="date"
+              name="hiringDate"
               className="w-full px-4 py-3 rounded-xl bg-white/60 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              value={data.hiringDate}
+              onChange={handelChange}
               required
             />
           </div>
@@ -294,13 +344,16 @@ const Register = () => {
               Salary (₹)
             </label>
             <input
-              name="salary"
-              value={Data.salary}
-              onChange={HandleChange}
               type="number"
+              name="salary"
               className="w-full px-4 py-3 rounded-xl bg-white/60 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              value={data.salary}
+              onChange={handelChange}
               required
             />
+            {errors.salary && (
+              <p className="mt-1 text-sm text-red-500">{errors.salary}</p>
+            )}
           </div>
 
           {/* Create Password */}
@@ -309,14 +362,19 @@ const Register = () => {
               Create Password
             </label>
             <input
-              name="crPassword"
-              value={Data.crPassword}
-              onChange={HandleChange}
               type="password"
-              className="w-full px-4 py-3 rounded-xl bg-white/60 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              name="crPassword"
+              className={`w-full px-4 py-3 rounded-xl bg-white/60 border ${
+                errors.crPassword ? "border-red-500" : "border-gray-300"
+              } focus:outline-none focus:ring-2 focus:ring-purple-400`}
               placeholder="********"
+              value={data.crPassword}
+              onChange={handelChange}
               required
             />
+            {errors.crPassword && (
+              <p className="mt-1 text-sm text-red-500">{errors.crPassword}</p>
+            )}
           </div>
 
           {/* Confirm Password */}
@@ -325,25 +383,107 @@ const Register = () => {
               Confirm Password
             </label>
             <input
+              type="password"
               name="password"
-              value={Data.password}
-              onChange={HandleChange}
-              type="text"
-              className="w-full px-4 py-3 rounded-xl bg-white/60 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              className={`w-full px-4 py-3 rounded-xl bg-white/60 border ${
+                errors.password ? "border-red-500" : "border-gray-300"
+              } focus:outline-none focus:ring-2 focus:ring-purple-400`}
               placeholder="********"
+              value={data.password}
+              onChange={handelChange}
               required
             />
-             {
-              error.password && <p className="text-sm text-red-500">{error.password}</p>
-            }
+            {errors.password && (
+              <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+            )}
+          </div>
+
+          {/* Address */}
+          <div>
+            <label className="block mb-1 text-blue-900 font-medium">
+              Address
+            </label>
+            <textarea
+              name="address"
+              className="w-full px-4 py-3 rounded-xl bg-white/60 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              rows="3"
+              value={data.address}
+              onChange={handelChange}
+              required
+            />
+            {errors.address && (
+              <p className="mt-1 text-sm text-red-500">{errors.address}</p>
+            )}
+          </div>
+
+          {/* Shift Start Time */}
+          <div>
+            <label className="block mb-1 text-blue-900 font-medium">
+              Shift Start Time
+            </label>
+            <input
+              type="time"
+              name="shiftStartTime"
+              className="w-full px-4 py-3 rounded-xl bg-white/60 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              value={data.shiftStartTime}
+              onChange={handelChange}
+              required
+            />
+          </div>
+
+          {/* Shift End Time */}
+          <div>
+            <label className="block mb-1 text-blue-900 font-medium">
+              Shift End Time
+            </label>
+            <input
+              type="time"
+              name="shiftEndTime"
+              className="w-full px-4 py-3 rounded-xl bg-white/60 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              value={data.shiftEndTime}
+              onChange={handelChange}
+              required
+            />
+          </div>
+
+          {/* Week Off */}
+          <div>
+            <label className="block mb-1 text-blue-900 font-medium">
+              Week Off
+            </label>
+            <select
+              name="weekOff"
+              className="w-full px-4 py-3 rounded-xl bg-white/60 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              value={data.weekOff}
+              onChange={handelChange}
+              required
+            >
+              <option value="Sunday">Sunday</option>
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+              <option value="Saturday">Saturday</option>
+            </select>
           </div>
 
           {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white font-bold py-3 rounded-full transition duration-300 shadow-xl"
+            disabled={isLoading}
+            className="w-full bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 
+              text-white font-bold py-3 rounded-full transition duration-300 shadow-xl
+              disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            Register
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <AiOutlineLoading3Quarters className="animate-spin text-xl" />
+                Registering...
+              </span>
+            ) : (
+              "Register"
+            )}
           </button>
         </form>
       </div>

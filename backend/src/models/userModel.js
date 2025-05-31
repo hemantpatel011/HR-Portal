@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const employeeSchema = mongoose.Schema(
+const userSchema = mongoose.Schema(
   {
     fullName: {
       type: String,
@@ -8,7 +8,6 @@ const employeeSchema = mongoose.Schema(
     },
     email: {
       type: String,
-      unique: true,
       required: true,
     },
     phone: {
@@ -53,6 +52,32 @@ const employeeSchema = mongoose.Schema(
       required: true,
       default: "Active",
     },
+    role: {
+      type: String,
+      enum: ["Admin", "Manager", "Employee"],
+      required: true,
+      default: "Employee",
+    },
+    shiftStartTime: {
+      type: String,
+      required: true,
+      default: "09:00",
+    },
+    shiftEndTime: {
+      type: String,
+      required: true,
+      default: "18:00",
+    },
+    address: {
+      type: String,
+      required: true,
+    },
+    weekOff: {
+      type: String,
+      enum: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      required: true,
+      default: "Sunday",
+    },
     profilePic: {
       type: String,
     },
@@ -60,6 +85,6 @@ const employeeSchema = mongoose.Schema(
   { timestamps: true }
 );
 
-const employee = mongoose.model("employee", employeeSchema);
+const User = mongoose.model("user", userSchema);
 
-export default employee;
+export default User;
