@@ -9,7 +9,7 @@ export const userLogin = async (req, res) => {
     if (!email || !password) {
       const error = new Error("All fields are required");
       error.statusCode = 400;
-      return next(error);
+      return ;
     }
     // console.log("email", email);
     // console.log("password", password);
@@ -19,7 +19,7 @@ export const userLogin = async (req, res) => {
     if (!user) {
       const error = new Error("User not found");
       error.statusCode = 404;
-      return next(error);
+      return ;
     }
     // console.log("user", user);
 
@@ -28,7 +28,7 @@ export const userLogin = async (req, res) => {
     if (!isPasswordValid) {
       const error = new Error("Invalid credentials");
       error.statusCode = 401;
-      return next(error);
+      return ;
     }
 
     // console.log("isPasswordValid", isPasswordValid);

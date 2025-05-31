@@ -44,7 +44,7 @@ try{
           <label className="block mb-1 text-gray-700">Email</label>
           <input
             name='email'
-            value={Data.email}
+            value={data.email}
              onChange={handleChange}
             type="email"
             className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300"
@@ -55,7 +55,7 @@ try{
           <label className="block mb-1 text-gray-700">Password</label>
           <input
           name='password'
-            value={Data.password}
+            value={data.password}
              onChange={handleChange}
             type="password"
             className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300"
