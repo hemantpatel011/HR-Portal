@@ -90,7 +90,7 @@ export const userRegister = async (req, res) => {
       !address ||
       !weekOff
     ) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({ message: "All fields are required is must" });
     }
 
     // Check if user already exists
